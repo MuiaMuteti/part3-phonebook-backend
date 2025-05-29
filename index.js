@@ -42,15 +42,11 @@ app.get("/api/persons/:id", (request, response) => {
     }
 })
 
-app.delete("/api/persons/:id", (request, response) => {
-  const id = request.params.id
-  persons = persons.filter(pers => pers.id !== id)
-  response.status(204).end()
+app.delete("/api/persons/:id", (request, response, next) => {
+  Person.findByIdAndDelete(request.params.id).then(result => {
+    response.status(204).end()
+  }).catch(error => next(error))  
 })
-
-const generateId = () => {
-  return Math.floor(Math.random() * Date.now())
-}
 
 const nameExists = (name) => {
   return persons.find(pers => pers.name === name)
