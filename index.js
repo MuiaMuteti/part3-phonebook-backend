@@ -16,8 +16,6 @@ morgan.token("body", (request) => {
 
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :body"))
 
-let persons = []
-
 app.get("/api/persons", (request, response) => {
     Person.find({}).then(persons => {
       response.json(persons)
@@ -25,21 +23,22 @@ app.get("/api/persons", (request, response) => {
 })
 
 app.get("/info", (request, response) => {
-    const body = `<p>Phonebook has info for ${persons.length} people</p>
+  Person.countDocuments().then(count => {
+    const body = `<p>Phonebook has info for ${count} people</p>
     <p>${new Date()}</p>`
 
     response.send(body)
+  })
 })
 
-app.get("/api/persons/:id", (request, response) => {
-    const id = request.params.id
-    const person = persons.find(pers => pers.id === id)
-
+app.get("/api/persons/:id", (request, response, next) => {
+  Person.findById(request.params.id).then(person => {
     if (person) {
-        return response.json(person)
+      response.json(person)
     } else {
-        response.status(404).end()
+      response.status(404).end()
     }
+  }).catch(error => next(error))
 })
 
 app.delete("/api/persons/:id", (request, response, next) => {
@@ -47,10 +46,6 @@ app.delete("/api/persons/:id", (request, response, next) => {
     response.status(204).end()
   }).catch(error => next(error))  
 })
-
-const nameExists = (name) => {
-  return persons.find(pers => pers.name === name)
-}
 
 app.post("/api/persons", (request, response) => {
   const body = request.body
